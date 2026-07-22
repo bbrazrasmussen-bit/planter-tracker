@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Planter Log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root{
+    --paper:#F1EEE4;
+    --paper-alt:#E7E2D3;
+    --ink:#2B2A24;
+    --ink-soft:#6E5C46;
+    --forest:#24402B;
+    --forest-deep:#182A1D;
+    --moss:#5B7A54;
+    --clay:#B65A31;
+    --clay-soft:#D98B67;
+    --ochre:#C99A2A;
+    --line: rgba(43,42,36,0.16);
+    --card-shadow: 0 1px 0 rgba(43,42,36,0.06), 0 8px 20px -12px rgba(24,42,29,0.35);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1200px 600px at 10% -10%, rgba(91,122,84,0.10), transparent 60%),
+      var(--paper);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  #app{max-width:520px;margin:0 auto;padding:20px 16px 64px;}
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+  }
+  h1,h2,h3{font-family:'Fraunces',serif;margin:0;color:var(--forest-deep);}
+
+  /* ---------- Tag header (signature element) ---------- */
+  .tag{
+    position:relative;
+    background:var(--forest);
+    color:var(--paper);
+    border-radius:18px 18px 10px 10px;
+    padding:26px 20px 20px;
+    margin-bottom:22px;
+    box-shadow:var(--card-shadow);
+  }
+  .tag::before{
+    content:"";
+    position:absolute;
+    top:10px; left:50%; transform:translateX(-50%);
+    width:14px; height:14px;
+    background:var(--paper);
+    border-radius:50%;
+    box-shadow: inset 0 2px 3px rgba(0,0,0,0.35);
+  }
+  .tag .stitch{
+    border-top:2px dashed rgba(241,238,228,0.28);
+    margin-top:14px;
+    padding-top:12px;
+  }
+  .tag h1{color:var(--paper);font-size:26px;font-weight:600;line-height:1.15;}
+  .tag .sub{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:rgba(241,238,228,0.72);
+    margin-top:6px;
+    display:flex; gap:10px; flex-wrap:wrap;
+  }
+  .tag a.back, .tag button.linklike{
+    color:rgba(241,238,228,0.85);
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    text-decoration:none;
+    border-bottom:1px solid rgba(241,238,228,0.4);
+    background:none;border:none;cursor:pointer;padding:0;
+  }
+
+  /* ---------- Cards ---------- */
+  .card{
+    background:var(--paper-alt);
+    border-radius:14px;
+    padding:18px;
+    margin-bottom:16px;
+    box-shadow:var(--card-shadow);
+    border:1px solid var(--line);
+  }
+  .card h3{font-size:15px;color:var(--forest-deep);margin-bottom:2px;}
+  .card .hint{font-size:12.5px;color:var(--ink-soft);margin-bottom:12px;}
+
+  /* ---------- Moisture chip row ---------- */
+  .chip-row{display:flex;gap:6px;flex-wrap:wrap;}
+  .chip{
+    flex:1 1 auto; min-width:30px;
+    height:42px;
+    border-radius:9px;
+    border:1.5px solid var(--line);
+    background:#fff;
+    font-family:'JetBrains Mono',monospace;
+    font-weight:600;
+    font-size:14px;
+    color:var(--ink);
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+    transition:transform .12s ease, box-shadow .12s ease;
+  }
+  .chip:active{transform:scale(0.94);}
+  .chip.selected{
+    color:#fff;
+    border-color:transparent;
+    box-shadow:0 3px 10px -3px rgba(0,0,0,0.4);
+    transform:scale(1.06);
+  }
+  .scale-labels{
+    display:flex;justify-content:space-between;
+    font-size:11px;color:var(--ink-soft);margin-top:8px;
+    font-family:'JetBrains Mono',monospace;
+  }
+
+  /* ---------- Leaf / dot ratings ---------- */
+  .rating-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid var(--line);}
+  .rating-row:first-of-type{border-top:none;}
+  .rating-label{font-size:13.5px;font-weight:500;color:var(--ink);}
+  .rating-icons{display:flex;gap:4px;}
+  .rating-icons button{background:none;border:none;padding:2px;cursor:pointer;line-height:0;}
+  .rating-icons svg{width:22px;height:22px;display:block;}
+
+  textarea{
+    width:100%;
+    border:1.5px solid var(--line);
+    border-radius:10px;
+    padding:10px 12px;
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    resize:vertical;
+    min-height:64px;
+    background:#fff;
+    color:var(--ink);
+  }
+  textarea:focus, .chip:focus-visible, button:focus-visible, input:focus-visible{
+    outline:2px solid var(--forest); outline-offset:2px;
+  }
+
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    width:100%;
+    padding:14px 18px;
+    border-radius:11px;
+    border:none;
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:15px;
+    cursor:pointer;
+    background:var(--clay);
+    color:#fff;
+    box-shadow:0 6px 16px -6px rgba(182,90,49,0.55);
+    transition:transform .12s ease;
+  }
+  .btn:active{transform:scale(0.98);}
+  .btn.secondary{
+    background:transparent;
+    color:var(--forest-deep);
+    border:1.5px solid var(--line);
+    box-shadow:none;
+  }
+  .btn.small{width:auto;padding:9px 14px;font-size:13px;}
+
+  .toast{
+    position:fixed;left:50%;bottom:22px;transform:translateX(-50%);
+    background:var(--forest-deep);color:var(--paper);
+    padding:10px 18px;border-radius:999px;
+    font-size:13px;font-family:'JetBrains Mono',monospace;
+    box-shadow:0 8px 20px rgba(0,0,0,0.3);
+    opacity:0; pointer-events:none; transition:opacity .25s ease, transform .25s ease;
+    z-index:50;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(-4px);}
+
+  /* ---------- History ---------- */
+  .stub{
+    background:#fff;
+    border:1px solid var(--line);
+    border-left:4px solid var(--moss);
+    border-radius:8px;
+    padding:12px 14px;
+    margin-bottom:10px;
+  }
+  .stub-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;}
+  .stub-time{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--ink-soft);}
+  .stub-mois{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;padding:2px 8px;border-radius:6px;color:#fff;}
+  .stub-row{font-size:12.5px;color:var(--ink-soft);margin-top:3px;}
+  .stub-notes{font-size:13px;color:var(--ink);margin-top:6px;font-style:italic;}
+  .empty{
+    text-align:center;color:var(--ink-soft);font-size:13px;
+    padding:24px 10px;border:1px dashed var(--line);border-radius:10px;
+  }
+
+  /* ---------- Home / admin ---------- */
+  .planter-grid{display:flex;flex-direction:column;gap:10px;}
+  .planter-item{
+    display:flex;align-items:center;justify-content:space-between;
+    background:var(--paper-alt);border:1px solid var(--line);
+    border-radius:12px;padding:12px 14px;
+    box-shadow:var(--card-shadow);
+  }
+  .planter-item .info{display:flex;flex-direction:column;gap:2px;}
+  .planter-item .name{font-family:'Fraunces',serif;font-weight:600;font-size:15.5px;color:var(--forest-deep);}
+  .planter-item .meta{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-soft);}
+  .planter-item .actions{display:flex;gap:6px;}
+  .icon-btn{
+    width:36px;height:36px;border-radius:9px;border:1.5px solid var(--line);
+    background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;
+  }
+  .icon-btn svg{width:17px;height:17px;}
+
+  .add-row{display:flex;gap:8px;margin-top:4px;}
+  .add-row input{
+    flex:1;border:1.5px solid var(--line);border-radius:10px;padding:12px 14px;
+    font-family:'Inter',sans-serif;font-size:14px;background:#fff;color:var(--ink);
+  }
+
+  /* ---------- Modal ---------- */
+  .overlay{
+    position:fixed;inset:0;background:rgba(24,20,14,0.55);
+    display:flex;align-items:center;justify-content:center;padding:20px;z-index:40;
+  }
+  .modal{
+    background:var(--paper);border-radius:16px;padding:22px;max-width:340px;width:100%;
+    text-align:center;box-shadow:0 20px 50px rgba(0,0,0,0.4);
+  }
+  .modal h3{font-size:17px;margin-bottom:4px;}
+  .modal .url-box{
+    font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--ink-soft);
+    word-break:break-all;background:var(--paper-alt);border-radius:8px;padding:8px 10px;margin:12px 0;
+  }
+  #qr-holder{display:flex;justify-content:center;margin:14px 0;min-height:172px;align-items:center;}
+  #qr-holder img, #qr-holder canvas{border-radius:8px;border:6px solid #fff;box-shadow:0 4px 14px rgba(0,0,0,0.15);}
+  .modal-actions{display:flex;gap:8px;margin-top:6px;}
+
+  a.top-link{
+    display:inline-block;margin-bottom:14px;color:var(--ink-soft);
+    font-family:'JetBrains Mono',monospace;font-size:11.5px;text-decoration:none;border-bottom:1px solid var(--line);
+  }
+</style>
+</head>
+<body>
+<div id="app">Loading…</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= Airtable storage layer ================= */
+const AIRTABLE_BASE = 'appRCX7vd4PNFl4kP';
+const AIRTABLE_TOKEN = 'patooRGGAN9tXAeMf.dd5ca8c198b7f6952a3513479473d7e22a78b8dbcd6b28202b78e67a9f737b5b';
+const AIRTABLE_URL = `https://api.airtable.com/v0/${AIRTABLE_BASE}`;
+
+async function airtableGet(table, params={}){
+  const usp = new URLSearchParams(params);
+  const res = await fetch(`${AIRTABLE_URL}/${encodeURIComponent(table)}?${usp.toString()}`, {
+    headers:{ Authorization:`Bearer ${AIRTABLE_TOKEN}` }
+  });
+  if(!res.ok) throw new Error('Airtable GET ' + table + ' failed: ' + res.status);
+  return res.json();
+}
+async function airtablePost(table, fields){
+  const res = await fetch(`${AIRTABLE_URL}/${encodeURIComponent(table)}`, {
+    method:'POST',
+    headers:{ Authorization:`Bearer ${AIRTABLE_TOKEN}`, 'Content-Type':'application/json' },
+    body: JSON.stringify({ records: [{ fields }] })
+  });
+  if(!res.ok) throw new Error('Airtable POST ' + table + ' failed: ' + res.status);
+  return res.json();
+}
+async function fetchAllRecords(table, params={}){
+  let all = [];
+  let offset;
+  do{
+    const p = {...params};
+    if(offset) p.offset = offset;
+    const data = await airtableGet(table, p);
+    all = all.concat(data.records);
+    offset = data.offset;
+  } while(offset);
+  return all;
+}
+function mapEntryFields(f){
+  return { ts:f.Timestamp, moisture:f.Moisture, leaf:f.Leaf, firm:f.Firm, burn:f.Burn, bug:f.Bug, notes:f.Notes || '' };
+}
+
+async function getPlanters(){
+  try{
+    const records = await fetchAllRecords('Planters', { pageSize:'100' });
+    return records
+      .map(r => ({ id:r.fields.PlanterId, name:r.fields.Name, createdAt:r.fields.CreatedAt }))
+      .sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+  }catch(e){ console.error(e); return null; }
+}
+async function addPlanter(id, name){
+  return airtablePost('Planters', { PlanterId:id, Name:name, CreatedAt:new Date().toISOString() });
+}
+async function getEntries(planterId){
+  try{
+    const safeId = planterId.replace(/'/g, "\\'");
+    const records = await fetchAllRecords('Entries', {
+      filterByFormula: `{PlanterId}='${safeId}'`,
+      'sort[0][field]':'Timestamp',
+      'sort[0][direction]':'desc',
+      pageSize:'100'
+    });
+    return records.map(r => mapEntryFields(r.fields));
+  }catch(e){ console.error(e); return null; }
+}
+async function getAllEntriesGrouped(){
+  try{
+    const records = await fetchAllRecords('Entries', {
+      'sort[0][field]':'Timestamp', 'sort[0][direction]':'desc', pageSize:'100'
+    });
+    const grouped = {};
+    records.forEach(r=>{
+      const pid = r.fields.PlanterId;
+      (grouped[pid] = grouped[pid] || []).push(mapEntryFields(r.fields));
+    });
+    return grouped;
+  }catch(e){ console.error(e); return null; }
+}
+async function addEntry(planterId, entry){
+  return airtablePost('Entries', {
+    PlanterId: planterId, Timestamp: entry.ts, Moisture: entry.moisture,
+    Leaf: entry.leaf, Firm: entry.firm, Burn: entry.burn, Bug: entry.bug, Notes: entry.notes
+  });
+}
+
+/* ================= Utilities ================= */
+function slugify(s){
+  return s.toLowerCase().trim()
+    .replace(/[^a-z0-9]+/g,'-')
+    .replace(/(^-|-$)/g,'')
+    .slice(0,28) || 'planter';
+}
+function uid(){ return Math.random().toString(36).slice(2,7); }
+function fmtTime(iso){
+  const d = new Date(iso);
+  return d.toLocaleDateString(undefined,{month:'short',day:'numeric'}) + ' · ' +
+         d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});
+}
+function relTime(iso){
+  if(!iso) return 'never logged';
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.round(diff/60000);
+  if(mins < 1) return 'just now';
+  if(mins < 60) return mins + 'm ago';
+  const hrs = Math.round(mins/60);
+  if(hrs < 24) return hrs + 'h ago';
+  const days = Math.round(hrs/24);
+  return days + 'd ago';
+}
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(()=> t.classList.remove('show'), 2200);
+}
+function baseUrl(){
+  return window.location.origin + window.location.pathname;
+}
+function urlForPlanter(id){
+  return baseUrl() + '?planter=' + encodeURIComponent(id);
+}
+
+/* Moisture color: tan (dry) -> green (ideal, 5) -> blue (waterlogged) */
+function moistureColor(v){
+  let hue;
+  if(v <= 5){ hue = 40 + (140-40) * ((v-1)/4); }
+  else{ hue = 140 + (205-140) * ((v-5)/5); }
+  return `hsl(${hue}, 46%, ${v===5?34:40}%)`;
+}
+/* Bug level color: calm green -> clay/red as level rises */
+function bugColor(v){
+  const hue = 100 - (100-8) * ((v-1)/4);
+  return `hsl(${hue}, 55%, 42%)`;
+}
+
+function leafIcon(filled, color){
+  return `<svg viewBox="0 0 24 24" fill="none">
+    <path d="M12 3C7 3 3 8 3 14c0 4.5 3.8 7 9 7s9-2.5 9-7C21 8 17 3 12 3Z"
+      fill="${filled ? color : 'none'}" stroke="${filled ? color : 'var(--line)'}" stroke-width="1.6"/>
+    <path d="M12 6.5V20" stroke="${filled ? '#fff' : 'var(--line)'}" stroke-width="1.2" opacity="${filled?0.55:1}"/>
+  </svg>`;
+}
+function dotIcon(filled, color){
+  return `<svg viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="8.5" fill="${filled? color : 'none'}" stroke="${filled? color : 'var(--line)'}" stroke-width="1.6"/>
+  </svg>`;
+}
+
+/* ================= State ================= */
+const params = new URLSearchParams(window.location.search);
+const currentPlanterId = params.get('planter');
+
+const draft = { moisture:5, leaf:0, firm:0, burn:0, bug:0, notes:'' };
+
+/* ================= Rendering ================= */
+const app = document.getElementById('app');
+
+async function init(){
+  if(currentPlanterId){
+    await renderPlanterView(currentPlanterId);
+  } else {
+    await renderHome();
+  }
+}
+
+/* ---------- Home / Admin view ---------- */
+async function renderHome(){
+  const planters = await getPlanters();
+  if(planters === null){
+    app.innerHTML = `
+      <div class="card">
+        <h3>Couldn't reach Airtable</h3>
+        <div class="hint">Check the base ID and token, and that the Planters/Entries tables exist with the expected field names.</div>
+        <button class="btn secondary" onclick="renderHome()">Retry</button>
+      </div>`;
+    return;
+  }
+  const grouped = await getAllEntriesGrouped();
+  const withMeta = planters.map(p=>{
+    const es = (grouped && grouped[p.id]) || [];
+    return {...p, lastAt: es[0] ? es[0].ts : null, count: es.length};
+  });
+
+  app.innerHTML = `
+    <div class="tag">
+      <div class="eyebrow" style="color:rgba(241,238,228,0.65)">Field Log</div>
+      <h1>Planter Watch</h1>
+      <div class="sub">
+        <span>${planters.length} planter${planters.length===1?'':'s'} tracked</span>
+      </div>
+      <div class="stitch">
+        <span style="font-size:12px;color:rgba(241,238,228,0.75)">Scan a planter's tag to log an entry, or manage tags below.</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Add a planter</h3>
+      <div class="hint">Give it a name — you'll get a QR code to print and stick at the planter.</div>
+      <div class="add-row">
+        <input id="new-name" type="text" placeholder="e.g. Lobby North Fern" maxlength="40"/>
+        <button class="btn small" id="add-btn" style="width:auto;">Add</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Planters</h3>
+      <div class="hint">Tap a name to open its log, or the QR icon to view/print its tag.</div>
+      <div class="planter-grid" id="planter-grid"></div>
+    </div>
+  `;
+
+  const grid = document.getElementById('planter-grid');
+  if(withMeta.length === 0){
+    grid.innerHTML = `<div class="empty">No planters yet — add one above to generate its first QR tag.</div>`;
+  } else {
+    grid.innerHTML = withMeta.map(p => `
+      <div class="planter-item">
+        <div class="info">
+          <div class="name">${escapeHtml(p.name)}</div>
+          <div class="meta">${relTime(p.lastAt)} · ${p.count} log${p.count===1?'':'s'}</div>
+        </div>
+        <div class="actions">
+          <button class="icon-btn" title="View QR" onclick="openQrModal('${p.id}','${escapeAttr(p.name)}')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--forest-deep)" stroke-width="1.6"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v3M14 20h3"/></svg>
+          </button>
+          <button class="icon-btn" title="Open log" onclick="window.location.href='${urlForPlanter(p.id)}'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--forest-deep)" stroke-width="1.6"><path d="M9 6l6 6-6 6"/></svg>
+          </button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  document.getElementById('add-btn').onclick = async ()=>{
+    const nameInput = document.getElementById('new-name');
+    const name = nameInput.value.trim();
+    if(!name){ showToast('Give the planter a name first'); return; }
+    const addBtn = document.getElementById('add-btn');
+    addBtn.disabled = true; addBtn.textContent = 'Adding…';
+    let id = slugify(name);
+    if(withMeta.some(p=>p.id===id)) id = id + '-' + uid();
+    try{
+      await addPlanter(id, name);
+      showToast('Planter added');
+      await renderHome();
+      openQrModal(id, name);
+    }catch(e){
+      console.error(e);
+      showToast('Could not save to Airtable — check console');
+      addBtn.disabled = false; addBtn.textContent = 'Add';
+    }
+  };
+}
+
+function escapeHtml(s){ return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function escapeAttr(s){ return escapeHtml(s).replace(/'/g,"\\'"); }
+
+/* ---------- QR Modal ---------- */
+function openQrModal(id, name){
+  const url = urlForPlanter(id);
+  const overlay = document.createElement('div');
+  overlay.className = 'overlay';
+  overlay.innerHTML = `
+    <div class="modal">
+      <div class="eyebrow" style="color:var(--ink-soft)">Planter tag</div>
+      <h3>${escapeHtml(name)}</h3>
+      <div id="qr-holder"></div>
+      <div class="url-box">${url}</div>
+      <div class="modal-actions">
+        <button class="btn secondary small" id="copy-btn" style="flex:1;">Copy link</button>
+        <button class="btn small" id="close-modal" style="flex:1;background:var(--forest);">Done</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e=>{ if(e.target === overlay) document.body.removeChild(overlay); });
+  overlay.querySelector('#close-modal').onclick = ()=> document.body.removeChild(overlay);
+  overlay.querySelector('#copy-btn').onclick = async ()=>{
+    try{ await navigator.clipboard.writeText(url); showToast('Link copied'); }
+    catch(e){ showToast('Copy failed — select the text above'); }
+  };
+
+  const holder = overlay.querySelector('#qr-holder');
+  try{
+    if(window.QRCode){
+      new QRCode(holder, { text: url, width: 176, height: 176, colorDark: '#24402B', colorLight: '#ffffff' });
+    } else {
+      holder.innerHTML = `<div class="empty" style="min-height:auto;">QR library didn't load — use the copied link with any QR generator.</div>`;
+    }
+  }catch(e){
+    holder.innerHTML = `<div class="empty" style="min-height:auto;">Couldn't render QR — use the copied link with any QR generator.</div>`;
+  }
+}
+
+/* ---------- Planter log view ---------- */
+async function renderPlanterView(id){
+  const planters = await getPlanters();
+  if(planters === null){
+    app.innerHTML = `
+      <div class="card">
+        <h3>Couldn't reach Airtable</h3>
+        <div class="hint">Check the base ID and token, and that the Planters/Entries tables exist with the expected field names.</div>
+        <button class="btn secondary" onclick="renderPlanterView('${id}')">Retry</button>
+      </div>`;
+    return;
+  }
+  let planter = planters.find(p=>p.id===id);
+  if(!planter){
+    // self-heal: unknown id reached via URL directly — register it
+    planter = {id, name: id.replace(/-/g,' '), createdAt: new Date().toISOString()};
+    try{ await addPlanter(id, planter.name); }catch(e){ console.error(e); }
+  }
+  const entries = await getEntries(id) || [];
+
+  app.innerHTML = `
+    <a class="top-link" href="${baseUrl()}">&larr; All planters</a>
+    <div class="tag">
+      <div class="eyebrow" style="color:rgba(241,238,228,0.65)">Planter tag</div>
+      <h1>${escapeHtml(planter.name)}</h1>
+      <div class="sub">
+        <span>Last logged: ${relTime(entries[0]?.ts)}</span>
+        <span>${entries.length} entr${entries.length===1?'y':'ies'}</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Water moisture</h3>
+      <div class="hint">1 = bone dry · 5 = ideal · 10 = waterlogged</div>
+      <div class="chip-row" id="moisture-row"></div>
+      <div class="scale-labels"><span>1 dry</span><span>5 ideal</span><span>10 soggy</span></div>
+    </div>
+
+    <div class="card">
+      <h3>Plant health</h3>
+      <div class="hint">Rate each, 1–5</div>
+      <div id="health-rows"></div>
+    </div>
+
+    <div class="card">
+      <h3>Bug level</h3>
+      <div class="hint">1 = none seen · 5 = infested</div>
+      <div class="rating-row" style="border-top:none;">
+        <span class="rating-label">Pests observed</span>
+        <div class="rating-icons" id="bug-icons"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Notes</h3>
+      <textarea id="notes" placeholder="Anything worth flagging — yellowing, new growth, soil pests…" maxlength="280"></textarea>
+    </div>
+
+    <button class="btn" id="submit-btn">Log this entry</button>
+
+    <div class="card" style="margin-top:22px;">
+      <h3>History</h3>
+      <div id="history"></div>
+    </div>
+  `;
+
+  renderMoistureRow();
+  renderHealthRows();
+  renderBugIcons();
+  renderHistory(entries);
+
+  document.getElementById('submit-btn').onclick = async ()=>{
+    if(draft.leaf===0 || draft.firm===0 || draft.burn===0 || draft.bug===0){
+      showToast('Fill in every rating before logging');
+      return;
+    }
+    const btn = document.getElementById('submit-btn');
+    btn.disabled = true; btn.textContent = 'Saving…';
+    try{
+      await addEntry(id, {
+        ts: new Date().toISOString(),
+        moisture: draft.moisture,
+        leaf: draft.leaf, firm: draft.firm, burn: draft.burn,
+        bug: draft.bug,
+        notes: document.getElementById('notes').value.trim()
+      });
+      showToast('Entry logged');
+      draft.leaf=0; draft.firm=0; draft.burn=0; draft.bug=0; draft.moisture=5; draft.notes='';
+      await renderPlanterView(id);
+    }catch(e){
+      console.error(e);
+      showToast('Could not save to Airtable — check connection and retry');
+      btn.disabled = false; btn.textContent = 'Log this entry';
+    }
+  };
+}
+
+function renderMoistureRow(){
+  const row = document.getElementById('moisture-row');
+  row.innerHTML = '';
+  for(let v=1; v<=10; v++){
+    const chip = document.createElement('div');
+    chip.className = 'chip' + (draft.moisture===v ? ' selected' : '');
+    chip.textContent = v;
+    chip.tabIndex = 0;
+    chip.setAttribute('role','button');
+    chip.setAttribute('aria-label', 'Moisture level ' + v);
+    if(draft.moisture===v) chip.style.background = moistureColor(v);
+    chip.onclick = ()=>{ draft.moisture = v; renderMoistureRow(); };
+    row.appendChild(chip);
+  }
+}
+
+function renderHealthRows(){
+  const wrap = document.getElementById('health-rows');
+  const cats = [
+    {key:'leaf', label:'Leaf colour'},
+    {key:'firm', label:'Firmness'},
+    {key:'burn', label:'Leaf burning'}
+  ];
+  wrap.innerHTML = cats.map(c=>`
+    <div class="rating-row">
+      <span class="rating-label">${c.label}</span>
+      <div class="rating-icons" data-key="${c.key}"></div>
+    </div>
+  `).join('');
+  cats.forEach(c=>{
+    const holder = wrap.querySelector(`[data-key="${c.key}"]`);
+    renderLeafIcons(holder, c.key);
+  });
+}
+function renderLeafIcons(holder, key){
+  holder.innerHTML = '';
+  for(let v=1; v<=5; v++){
+    const b = document.createElement('button');
+    b.innerHTML = leafIcon(v <= draft[key], 'var(--forest)');
+    b.setAttribute('aria-label', key + ' rating ' + v);
+    b.onclick = ()=>{ draft[key] = v; renderLeafIcons(holder, key); };
+    holder.appendChild(b);
+  }
+}
+function renderBugIcons(){
+  const holder = document.getElementById('bug-icons');
+  holder.innerHTML = '';
+  for(let v=1; v<=5; v++){
+    const b = document.createElement('button');
+    b.innerHTML = dotIcon(v <= draft.bug, bugColor(draft.bug || v));
+    b.setAttribute('aria-label', 'Bug level ' + v);
+    b.onclick = ()=>{ draft.bug = v; renderBugIcons(); };
+    holder.appendChild(b);
+  }
+}
+
+function renderHistory(entries){
+  const holder = document.getElementById('history');
+  if(entries.length === 0){
+    holder.innerHTML = `<div class="empty">No entries yet — this planter's first log will appear here.</div>`;
+    return;
+  }
+  holder.innerHTML = entries.slice(0,15).map(e=>`
+    <div class="stub">
+      <div class="stub-top">
+        <span class="stub-time">${fmtTime(e.ts)}</span>
+        <span class="stub-mois" style="background:${moistureColor(e.moisture)}">moisture ${e.moisture}</span>
+      </div>
+      <div class="stub-row">Leaf ${'●'.repeat(e.leaf)}${'○'.repeat(5-e.leaf)} &nbsp;·&nbsp; Firm ${'●'.repeat(e.firm)}${'○'.repeat(5-e.firm)} &nbsp;·&nbsp; Burn ${'●'.repeat(e.burn)}${'○'.repeat(5-e.burn)}</div>
+      <div class="stub-row">Bugs ${'●'.repeat(e.bug)}${'○'.repeat(5-e.bug)}</div>
+      ${e.notes ? `<div class="stub-notes">"${escapeHtml(e.notes)}"</div>` : ''}
+    </div>
+  `).join('') + (entries.length > 15 ? `<div class="hint" style="text-align:center;margin-top:6px;">Showing 15 most recent of ${entries.length}</div>` : '');
+}
+
+init();
+</script>
+</body>
+</html>
